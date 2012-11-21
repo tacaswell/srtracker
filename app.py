@@ -143,8 +143,15 @@ def show_request(request_id):
         
         # add follow-on closure data, fix types, etc, etc
         by_id = {}
+
         follow_on_open_count = 0
         follow_on_close_count = 0
+
+
+        serve_nm_lst =  [s['service_name'] for s in 
+                         open311tools.services(app.config['OPEN311_SERVER'], 
+                                               app.config['OPEN311_API_KEY'])]
+
         for note in sr['notes']:
             if note['type'] in ('follow_on', 'follow_on_created', 'follow_on_closed'):
                 note_sr_id = note['extended_attributes']['service_request_id']
@@ -158,6 +165,12 @@ def show_request(request_id):
                     follow_on_open_count += 1
                     by_id[note_sr_id] = note
 
+                    serv_nm = note['extended_attributes']['service_name']
+                    print serv_nm
+                    print open311tools.services(app.config['OPEN311_SERVER'], app.config['OPEN311_API_KEY'])
+                    if serv_nm in serve_nm_lst:
+                        note['link_url'] = url_for('show_request', request_id=note_sr_id)
+
                 elif note['type'] == 'follow_on_closed' or note['description'].endswith('Closed'):
                     follow_on_close_count += 1
                     note['type'] = 'follow_on_closed'
@@ -169,6 +182,7 @@ def show_request(request_id):
         if follow_on_open_count >0:
             # remove the notes that claim the request is closed
             sr['notes'] = [n for n in sr['notes'] if not n['type'] == 'closed']
+
             # set the request to open
             sr['status'] = 'open'
 
@@ -187,6 +201,12 @@ def show_request(request_id):
                 # add the extra note
                 sr['notes'].append(tmp_note)
             
+
+        if 'parent_service_request_id' in sr['extended_attributes']:
+            p_req_id = sr['extended_attributes']['parent_service_request_id']
+            sr['parent_url'] = url_for('show_request', request_id=p_req_id)
+
+
         # if there's no activity yet, show 'under review'
         if relevant_notes == 0:
             sr['notes'].append({

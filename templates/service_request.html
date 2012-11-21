@@ -70,9 +70,16 @@
 								
 								<div class="details">
 									<p>
+
 										{% if note.type == 'follow_on_created' %}
 											<strong>Transferred to:</strong><br/>
+
+											{% if note.link_url %}
+											<strong><a href = {{note.link_url}}>{{ note.extended_attributes.service_name }}</a></strong><br/>
+											{% else %}
+
 											<strong>{{ note.extended_attributes.service_name }}</strong><br/>
+											{% endif %}
 											Department: {{ note.extended_attributes.agency_responsible }}
 											{% if note.extended_attributes.closed_datetime %}
 												<div>
@@ -106,12 +113,16 @@
 						<div class="details">
 							<p>
 								<strong>{{ sr.service_name }}</strong>
+								{% if sr.parent_url %}
+									<br/><a href = {{sr.parent_url}}>Parent</a>
+								{% endif %}
 								{% if sr.agency_responsible %}
 									<br/>Department: {{ sr.agency_responsible }}
 								{% endif %}
 								{%  if sr.extended_attributes and sr.extended_attributes.channel %}
 									<br/>via {{ sr.extended_attributes.channel.title() }}
 								{% endif %}
+
 							</p>
 						</div>
 					</li>
