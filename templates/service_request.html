@@ -114,7 +114,11 @@
 							<p>
 								<strong>{{ sr.service_name }}</strong>
 								{% if sr.parent_url %}
-									<br/><a href = {{sr.parent_url}}>Parent</a>
+									{% if sr.extended_attributes.duplicate %}
+										<br/><a href = {{sr.parent_url}}>Duplicate</a>
+									{% else %}
+										<br/><a href = {{sr.parent_url}}>Parent</a>
+									{% endif %}
 								{% endif %}
 								{% if sr.agency_responsible %}
 									<br/>Department: {{ sr.agency_responsible }}
