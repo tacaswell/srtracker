@@ -82,6 +82,32 @@ def request_search():
     else:
         abort(404)
 
+def fix_request_id_chi(request_id):
+    '''
+    A function to try to fix-up the request-id if we couldn't find it
+    on the first try. 
+
+    :param request_id: the request-id to try and fix up
+    :return: the fixed up id (that may or may not actually be different 
+    
+    '''
+    # Chicago's SR IDs are always \d\d-\d{8}, if we get just digits, reformat and try again
+
+    request_id_digits = re.sub(r'\D', '', request_id)
+    if len(request_id_digits) == 8:
+        # Try prepending the year if it's only 8 digits
+        request_id_digits = datetime.date.today().strftime('%y') + request_id_digits
+    if len(request_id_digits) == 10:
+        reformatted = '%s-%s' % (request_id_digits[:2], request_id_digits[2:])
+        # so we got a newly formatted request, try again
+        return reformatted
+
+    # fell through, return the original 
+    return request_id
+
+
+# tweak this to be configurable via config files 
+fix_request_id = fix_request_id_chi
 
 @app.route("/requests/<request_id>", methods=["GET", "POST"])
 def show_request(request_id):
@@ -104,16 +130,9 @@ def show_request(request_id):
         params['api_key'] = app.config['OPEN311_API_KEY']
     r = requests.get(url, params=params)
     if r.status_code == 404:
-        # TODO: how to generalize this?
-        # Chicago's SR IDs are always \d\d-\d{8}, if we get just digits, reformat and try again
-        request_id_digits = re.sub(r'\D', '', request_id)
-        if len(request_id_digits) == 8:
-            # Try prepending the year if it's only 8 digits
-            request_id_digits = datetime.date.today().strftime('%y') + request_id_digits
-        if len(request_id_digits) == 10:
-            reformatted = '%s-%s' % (request_id_digits[:2], request_id_digits[2:])
-            if reformatted != request_id:
-                return redirect(url_for('show_request', request_id=reformatted))
+        reformatted = fix_request_id(request_id)
+        if reformatted != request_id:
+            return redirect(url_for('show_request', request_id=reformatted))
         
         # It would be nice to log this for analytical purposes (what requests are being checked that we can't show?)
         # but that would be better done through GA or KISS Metrics than through server logging
