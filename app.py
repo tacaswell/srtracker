@@ -44,18 +44,27 @@ def password_protect():
 #--------------------------------------------------------------------------
 # ROUTES
 #--------------------------------------------------------------------------
-@app.route("/", defaults={'page':1})
-@app.route("/<int:page>")
-def index(page):
+@app.route("/", defaults={'page':1, 'sID':''})
+@app.route("/<int:page>", defaults={ 'sID':''})
+@app.route("/<int:page>/<sID>")
+def index(page, sID):
+    if 'filter' in request.args:
+        sID = request.args['filter']
+    print page, sID
     url = '%s/requests.json' % app.config['OPEN311_SERVER']
     page_size = app.config.get('SRS_PAGE_SIZE', 50)
     recent_sr_timeframe = app.config.get('RECENT_SRS_TIME')
     services_list = open311tools.services(app.config['OPEN311_SERVER'], app.config['OPEN311_API_KEY'])
+    if sID != '':
+        if sID not in [s['service_code'] for s in services_list]:
+            sID = ''
+
+
     params = {
         'extensions': 'true',
-        'legacy': 'false',
         'page_size': page_size,
-        'page' : page
+        'page': page,
+        'service_code': sID
     }
     if recent_sr_timeframe:
         start_datetime = datetime.datetime.utcnow() - datetime.timedelta(seconds=recent_sr_timeframe)
@@ -72,7 +81,7 @@ def index(page):
     else:
         # need to slice with max_recent_srs in case an endpoint doesn't support page_size
         service_requests = r.json[:page_size]
-    return render_app_template('index.html', service_requests=service_requests, page=page, services_list=services_list)
+    return render_app_template('index.html', service_requests=service_requests, page=page, services_list=services_list, sID=sID)
 
 
 @app.route("/requests/")
