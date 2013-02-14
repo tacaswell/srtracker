@@ -12,7 +12,7 @@ import requests
 import iso8601
 import pytz
 import updater
-from util import bool_from_env
+
 import open311tools
 
 # Config
@@ -27,6 +27,7 @@ PASSWORD_PROTECTED = False
 SECRET_KEY = 'please_please_change_this!'
 
 app = Flask(__name__)
+
 
 @app.before_request
 def password_protect():
@@ -44,8 +45,8 @@ def password_protect():
 #--------------------------------------------------------------------------
 # ROUTES
 #--------------------------------------------------------------------------
-@app.route("/", defaults={'page':1, 'sID':''})
-@app.route("/<int:page>", defaults={ 'sID':''})
+@app.route("/", defaults={'page': 1, 'sID': ''})
+@app.route("/<int:page>", defaults={'sID': ''})
 @app.route("/<int:page>/<sID>")
 def index(page, sID):
     if 'filter' in request.args:
@@ -58,7 +59,6 @@ def index(page, sID):
     if sID != '':
         if sID not in [s['service_code'] for s in services_list]:
             sID = ''
-
 
     params = {
         'extensions': 'true',
@@ -269,8 +269,7 @@ def friendly_time(dt, past_="ago", future_="from now", default="just now"):
     or "time until" e.g.
     3 days ago, 5 hours from now etc.
     """
-
-    if dt == None:
+    if dt is None:
         return ''
 
     if isinstance(dt, basestring):
@@ -300,14 +299,16 @@ def friendly_time(dt, past_="ago", future_="from now", default="just now"):
     for period, singular, plural in periods:
 
         if period:
-            return "%d %s %s" % (period, \
-                singular if period == 1 else plural, \
-                past_ if dt_is_past else future_)
+            return "%d %s %s" % (period,
+                                 singular if period == 1 else plural,
+                                 past_ if dt_is_past else future_)
 
     return default
 
 
 state_pattern = re.compile(r'\b(\w\w)(,?\s*\d{5}(?:-\d{4})?)?$')
+
+
 @app.template_filter()
 def title_address(address):
     '''Slightly improved title() method for address strings
